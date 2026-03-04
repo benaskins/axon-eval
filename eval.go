@@ -32,7 +32,7 @@ type EvalReport struct {
 
 // Evaluate runs evaluation scenarios and checks responses against expected outcomes.
 func (c *Client) Evaluate(description string, scenarios []EvalScenario) (*EvalReport, error) {
-	runID := fmt.Sprintf("eval-%s", timeNowFormat())
+	runID := fmt.Sprintf("eval-%s-%s", timeNowFormat(), randomSuffix())
 
 	// Emit run_started
 	if err := c.emitRunEvent("run_started", runID, description); err != nil {

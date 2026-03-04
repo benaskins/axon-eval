@@ -9,11 +9,30 @@ import (
 	"time"
 )
 
+// checkResponse checks that an HTTP response has the expected status code.
+// If not, it reads the response body and returns a descriptive error.
+func checkResponse(resp *http.Response, expectedStatus int) error {
+	if resp.StatusCode != expectedStatus {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
 // Config holds the URLs for the services that axon-test interacts with.
 type Config struct {
 	AuthURL      string
 	ChatURL      string
 	AnalyticsURL string
+	AgentSlug    string // defaults to "xagent" if empty
+}
+
+// agentSlug returns the configured agent slug, defaulting to "xagent".
+func (c Config) agentSlug() string {
+	if c.AgentSlug == "" {
+		return "xagent"
+	}
+	return c.AgentSlug
 }
 
 // Client is the main entry point for running test scenarios and evaluations.
@@ -61,9 +80,8 @@ func (c *Client) setupServiceUser() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	if err := checkResponse(resp, http.StatusOK); err != nil {
+		return err
 	}
 
 	var result struct {
@@ -90,24 +108,24 @@ func (c *Client) notifyUserCreated() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	if err := checkResponse(resp, http.StatusOK); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (c *Client) setupTestAgent() error {
+	slug := c.config.agentSlug()
 	agent := map[string]interface{}{
-		"slug":          "xagent",
+		"slug":          slug,
 		"name":          "X Agent",
 		"system_prompt": "You are a test agent used for infrastructure verification and evaluation.",
 		"skills":        []string{"current_time", "web_search", "check_weather", "recall_memory"},
 	}
 	body, _ := json.Marshal(agent)
 
-	req, err := http.NewRequest(http.MethodPut, c.config.ChatURL+"/api/agents/xagent", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPut, c.config.ChatURL+"/api/agents/"+slug, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}

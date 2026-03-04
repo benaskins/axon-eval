@@ -121,7 +121,15 @@ func evaluateCriterion(c Criterion, result ChatResult, idealResponse string, jud
 		return r
 
 	case "min_length":
-		n, _ := strconv.Atoi(c.Value)
+		n, err := strconv.Atoi(c.Value)
+		if err != nil {
+			return CriterionResult{
+				Criterion: "min_length:" + c.Value,
+				Pass:      false,
+				Score:     0,
+				Reason:    fmt.Sprintf("invalid min_length value %q: %v", c.Value, err),
+			}
+		}
 		pass := len(result.Response) >= n
 		r := CriterionResult{Criterion: "min_length:" + c.Value, Pass: pass, Score: boolScore(pass)}
 		if !pass {
@@ -130,7 +138,15 @@ func evaluateCriterion(c Criterion, result ChatResult, idealResponse string, jud
 		return r
 
 	case "max_length":
-		n, _ := strconv.Atoi(c.Value)
+		n, err := strconv.Atoi(c.Value)
+		if err != nil {
+			return CriterionResult{
+				Criterion: "max_length:" + c.Value,
+				Pass:      false,
+				Score:     0,
+				Reason:    fmt.Sprintf("invalid max_length value %q: %v", c.Value, err),
+			}
+		}
 		pass := len(result.Response) <= n
 		r := CriterionResult{Criterion: "max_length:" + c.Value, Pass: pass, Score: boolScore(pass)}
 		if !pass {

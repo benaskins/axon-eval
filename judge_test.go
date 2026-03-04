@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -79,23 +80,10 @@ func TestOllamaJudge_PromptContainsCriterion(t *testing.T) {
 		t.Fatal("expected prompt to be captured")
 	}
 	for _, want := range []string{"response text", "ideal text", "is warm and friendly"} {
-		if !contains(capturedPrompt, want) {
+		if !strings.Contains(capturedPrompt, want) {
 			t.Errorf("prompt missing %q", want)
 		}
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && searchString(s, substr)
-}
-
-func searchString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 func TestGradeScenario_WithJudge(t *testing.T) {

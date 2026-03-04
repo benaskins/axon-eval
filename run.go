@@ -2,9 +2,10 @@ package test
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
@@ -50,9 +51,15 @@ func timeNowFormat() string {
 	return time.Now().Format("20060102-150405")
 }
 
+func randomSuffix() string {
+	b := make([]byte, 2)
+	rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
 // Run executes a batch of test scenarios, bracketed by run_started/run_completed events.
 func (c *Client) Run(description string, scenarios []Scenario) (*Run, error) {
-	runID := fmt.Sprintf("run-%s", timeNowFormat())
+	runID := fmt.Sprintf("run-%s-%s", timeNowFormat(), randomSuffix())
 
 	// Emit run_started
 	if err := c.emitRunEvent("run_started", runID, description); err != nil {
@@ -92,7 +99,7 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 			"type":        eventType,
 			"timestamp":   time.Now().UTC(),
 			"run_id":      runID,
-			"agent_slug":  "xagent",
+			"agent_slug":  c.config.agentSlug(),
 			"user_id":     c.userID,
 			"description": description,
 		},
@@ -105,9 +112,8 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusAccepted {
-		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	if err := checkResponse(resp, http.StatusAccepted); err != nil {
+		return err
 	}
 
 	return nil
@@ -123,7 +129,7 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 			"type":        "eval_result",
 			"timestamp":   time.Now().UTC(),
 			"run_id":      runID,
-			"agent_slug":  "xagent",
+			"agent_slug":  c.config.agentSlug(),
 			"user_id":     c.userID,
 			"scenario":    grade.Scenario,
 			"response":    result.Response,
@@ -143,9 +149,8 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusAccepted {
-		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	if err := checkResponse(resp, http.StatusAccepted); err != nil {
+		return err
 	}
 
 	return nil
@@ -153,7 +158,7 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 
 // createConversation creates a new conversation via the chat service API.
 func (c *Client) createConversation() (string, error) {
-	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/agents/xagent/conversations", nil)
+	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/agents/"+c.config.agentSlug()+"/conversations", nil)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -164,9 +169,8 @@ func (c *Client) createConversation() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
-		respBody, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	if err := checkResponse(resp, http.StatusCreated); err != nil {
+		return "", err
 	}
 
 	var conv struct {
@@ -181,7 +185,7 @@ func (c *Client) createConversation() (string, error) {
 
 func (c *Client) sendChat(msg Message, runID, conversationID string) (*ChatResult, error) {
 	chatReq := map[string]interface{}{
-		"agent_slug":      "xagent",
+		"agent_slug":      c.config.agentSlug(),
 		"conversation_id": conversationID,
 		"messages": []map[string]string{
 			{"role": msg.Role, "content": msg.Content},
@@ -203,9 +207,8 @@ func (c *Client) sendChat(msg Message, runID, conversationID string) (*ChatResul
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	if err := checkResponse(resp, http.StatusOK); err != nil {
+		return nil, err
 	}
 
 	var result ChatResult

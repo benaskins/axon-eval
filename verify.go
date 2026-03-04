@@ -3,7 +3,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -31,9 +30,8 @@ func (c *Client) Verify(runID string) (*VerifyResult, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	if err := checkResponse(resp, http.StatusOK); err != nil {
+		return nil, err
 	}
 
 	var result VerifyResult
