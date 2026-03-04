@@ -117,27 +117,6 @@ func TestClient_Run(t *testing.T) {
 	if len(run.Responses) != 2 {
 		t.Errorf("expected 2 scenario responses, got %d", len(run.Responses))
 	}
-
-	// Each chat request should have a conversation_id
-	for i, req := range chatRequests {
-		if req["conversation_id"] == nil || req["conversation_id"] == "" {
-			t.Errorf("chat request %d missing conversation_id", i)
-		}
-	}
-
-	// Messages within multi-turn scenario should share the same conversation_id
-	greetingConvID := chatRequests[0]["conversation_id"]
-	multiTurnConvID1 := chatRequests[1]["conversation_id"]
-	multiTurnConvID2 := chatRequests[2]["conversation_id"]
-
-	if multiTurnConvID1 != multiTurnConvID2 {
-		t.Errorf("multi-turn messages should share conversation_id, got %v and %v", multiTurnConvID1, multiTurnConvID2)
-	}
-
-	// Different scenarios should have different conversation_ids
-	if greetingConvID == multiTurnConvID1 {
-		t.Errorf("different scenarios should have different conversation_ids, both got %v", greetingConvID)
-	}
 }
 
 func TestClient_EmitEvalResult(t *testing.T) {

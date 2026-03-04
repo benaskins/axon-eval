@@ -41,12 +41,11 @@ func (c *Client) Evaluate(description string, scenarios []EvalScenario) (*EvalRe
 
 	report := &EvalReport{}
 
-	for i, scenario := range scenarios {
-		conversationID := fmt.Sprintf("%s-scenario-%d", runID, i)
+	for _, scenario := range scenarios {
 		// Send all messages, collect the last response
 		var lastResult ChatResult
 		for _, msg := range scenario.Messages {
-			chatResult, err := c.sendChat(msg, runID, conversationID)
+			chatResult, err := c.sendChat(msg, runID)
 			if err != nil {
 				return nil, fmt.Errorf("eval chat: %w", err)
 			}

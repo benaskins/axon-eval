@@ -61,11 +61,10 @@ func (c *Client) Run(description string, scenarios []Scenario) (*Run, error) {
 
 	run := &Run{ID: runID}
 
-	for i, scenario := range scenarios {
-		conversationID := fmt.Sprintf("%s-scenario-%d", runID, i)
+	for _, scenario := range scenarios {
 		result := ScenarioResult{Name: scenario.Name}
 		for _, msg := range scenario.Messages {
-			chatResult, err := c.sendChat(msg, runID, conversationID)
+			chatResult, err := c.sendChat(msg, runID)
 			if err != nil {
 				return nil, fmt.Errorf("scenario %q: %w", scenario.Name, err)
 			}
@@ -147,10 +146,9 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 	return nil
 }
 
-func (c *Client) sendChat(msg Message, runID, conversationID string) (*ChatResult, error) {
+func (c *Client) sendChat(msg Message, runID string) (*ChatResult, error) {
 	chatReq := map[string]interface{}{
-		"agent_slug":      "xagent",
-		"conversation_id": conversationID,
+		"agent_slug": "xagent",
 		"messages": []map[string]string{
 			{"role": msg.Role, "content": msg.Content},
 		},
