@@ -108,6 +108,44 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 	return nil
 }
 
+// EmitEvalResult sends an eval_result event to the analytics service.
+func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatResult) error {
+	criteriaJSON, _ := json.Marshal(grade.Results)
+	toolsJSON, _ := json.Marshal(result.ToolsUsed)
+
+	events := []map[string]interface{}{
+		{
+			"type":        "eval_result",
+			"timestamp":   time.Now().UTC(),
+			"run_id":      runID,
+			"agent_slug":  "xagent",
+			"user_id":     c.userID,
+			"scenario":    grade.Scenario,
+			"response":    result.Response,
+			"duration_ms": result.DurationMs,
+			"tools_used":  json.RawMessage(toolsJSON),
+			"passed":      grade.Passed,
+			"failed":      grade.Failed,
+			"total":       grade.Total,
+			"criteria":    json.RawMessage(criteriaJSON),
+		},
+	}
+	body, _ := json.Marshal(events)
+
+	resp, err := c.httpClient.Post(c.config.AnalyticsURL+"/api/events", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusAccepted {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	return nil
+}
+
 func (c *Client) sendChat(msg Message, runID string) (*ChatResult, error) {
 	chatReq := map[string]interface{}{
 		"agent_slug": "xagent",

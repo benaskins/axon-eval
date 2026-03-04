@@ -119,6 +119,100 @@ func TestClient_Run(t *testing.T) {
 	}
 }
 
+func TestClient_EmitEvalResult(t *testing.T) {
+	var mu sync.Mutex
+	var analyticsEvents []map[string]interface{}
+
+	chatServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/internal/user-created":
+			w.WriteHeader(http.StatusOK)
+		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer chatServer.Close()
+
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{
+			"user_id":       "test-user",
+			"session_token": "test-token",
+		})
+	}))
+	defer authServer.Close()
+
+	analyticsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/events" && r.Method == http.MethodPost {
+			var events []map[string]interface{}
+			json.NewDecoder(r.Body).Decode(&events)
+			mu.Lock()
+			analyticsEvents = append(analyticsEvents, events...)
+			mu.Unlock()
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer analyticsServer.Close()
+
+	client, err := NewClient(Config{
+		AuthURL:      authServer.URL,
+		ChatURL:      chatServer.URL,
+		AnalyticsURL: analyticsServer.URL,
+	})
+	if err != nil {
+		t.Fatalf("NewClient failed: %v", err)
+	}
+
+	grade := &ScenarioGrade{
+		Scenario: "greeting",
+		Results: []CriterionResult{
+			{Criterion: "min_length", Pass: true, Score: 1, Reason: "ok"},
+			{Criterion: "llm_judge", Pass: false, Score: 0, Reason: "skipped"},
+		},
+		Passed: 1,
+		Failed: 1,
+		Total:  2,
+	}
+
+	chatResult := ChatResult{
+		Response:   "Hello there!",
+		DurationMs: 2847,
+		ToolsUsed:  []string{"check_weather"},
+	}
+
+	err = client.EmitEvalResult("run-test-123", grade, chatResult)
+	if err != nil {
+		t.Fatalf("EmitEvalResult failed: %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Find the eval_result event
+	var found bool
+	for _, ev := range analyticsEvents {
+		if ev["type"] == "eval_result" {
+			found = true
+			if ev["run_id"] != "run-test-123" {
+				t.Errorf("expected run_id 'run-test-123', got %v", ev["run_id"])
+			}
+			if ev["scenario"] != "greeting" {
+				t.Errorf("expected scenario 'greeting', got %v", ev["scenario"])
+			}
+			if ev["response"] != "Hello there!" {
+				t.Errorf("expected response, got %v", ev["response"])
+			}
+			if int(ev["passed"].(float64)) != 1 {
+				t.Errorf("expected passed=1, got %v", ev["passed"])
+			}
+		}
+	}
+	if !found {
+		t.Error("expected eval_result event, none found")
+	}
+}
+
 func TestClient_Run_SetsRunIDHeader(t *testing.T) {
 	var mu sync.Mutex
 	var runIDHeaders []string
