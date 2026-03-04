@@ -153,7 +153,7 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 
 // createConversation creates a new conversation via the chat service API.
 func (c *Client) createConversation() (string, error) {
-	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/conversations/xagent", nil)
+	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/agents/xagent/conversations", nil)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}

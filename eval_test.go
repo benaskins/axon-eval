@@ -14,7 +14,7 @@ func TestClient_Evaluate(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
-		case r.URL.Path == "/api/conversations/xagent" && r.Method == http.MethodPost:
+		case r.URL.Path == "/api/agents/xagent/conversations" && r.Method == http.MethodPost:
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			json.NewEncoder(w).Encode(map[string]interface{}{"id": "conv-test"})
