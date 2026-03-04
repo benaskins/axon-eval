@@ -62,9 +62,14 @@ func (c *Client) Run(description string, scenarios []Scenario) (*Run, error) {
 	run := &Run{ID: runID}
 
 	for _, scenario := range scenarios {
+		conversationID, err := c.createConversation()
+		if err != nil {
+			return nil, fmt.Errorf("scenario %q: create conversation: %w", scenario.Name, err)
+		}
+
 		result := ScenarioResult{Name: scenario.Name}
 		for _, msg := range scenario.Messages {
-			chatResult, err := c.sendChat(msg, runID)
+			chatResult, err := c.sendChat(msg, runID, conversationID)
 			if err != nil {
 				return nil, fmt.Errorf("scenario %q: %w", scenario.Name, err)
 			}
@@ -146,9 +151,38 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 	return nil
 }
 
-func (c *Client) sendChat(msg Message, runID string) (*ChatResult, error) {
+// createConversation creates a new conversation via the chat service API.
+func (c *Client) createConversation() (string, error) {
+	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/conversations/xagent", nil)
+	if err != nil {
+		return "", fmt.Errorf("create request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var conv struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&conv); err != nil {
+		return "", fmt.Errorf("decode response: %w", err)
+	}
+
+	return conv.ID, nil
+}
+
+func (c *Client) sendChat(msg Message, runID, conversationID string) (*ChatResult, error) {
 	chatReq := map[string]interface{}{
-		"agent_slug": "xagent",
+		"agent_slug":      "xagent",
+		"conversation_id": conversationID,
 		"messages": []map[string]string{
 			{"role": msg.Role, "content": msg.Content},
 		},

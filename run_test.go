@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -12,6 +13,7 @@ func TestClient_Run(t *testing.T) {
 	var mu sync.Mutex
 	var analyticsEvents []map[string]interface{}
 	var chatRequests []map[string]interface{}
+	convCounter := 0
 
 	chatServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -19,6 +21,17 @@ func TestClient_Run(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
+		case r.URL.Path == "/api/conversations/xagent" && r.Method == http.MethodPost:
+			mu.Lock()
+			convCounter++
+			id := fmt.Sprintf("conv-%d", convCounter)
+			mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"id":         id,
+				"agent_slug": "xagent",
+			})
 		case r.URL.Path == "/api/chat/sync" && r.Method == http.MethodPost:
 			var req map[string]interface{}
 			json.NewDecoder(r.Body).Decode(&req)
@@ -116,6 +129,27 @@ func TestClient_Run(t *testing.T) {
 	// Check responses were collected
 	if len(run.Responses) != 2 {
 		t.Errorf("expected 2 scenario responses, got %d", len(run.Responses))
+	}
+
+	// Each chat request should have a real conversation_id from the server
+	for i, req := range chatRequests {
+		cid, _ := req["conversation_id"].(string)
+		if cid == "" {
+			t.Errorf("chat request %d missing conversation_id", i)
+		}
+	}
+
+	// Greeting scenario (1 message) should use conv-1
+	if cid := chatRequests[0]["conversation_id"]; cid != "conv-1" {
+		t.Errorf("greeting should use conv-1, got %v", cid)
+	}
+
+	// Multi-turn scenario (2 messages) should both use conv-2
+	if cid := chatRequests[1]["conversation_id"]; cid != "conv-2" {
+		t.Errorf("multi-turn msg 1 should use conv-2, got %v", cid)
+	}
+	if cid := chatRequests[2]["conversation_id"]; cid != "conv-2" {
+		t.Errorf("multi-turn msg 2 should use conv-2, got %v", cid)
 	}
 }
 
@@ -223,6 +257,10 @@ func TestClient_Run_SetsRunIDHeader(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
+		case r.URL.Path == "/api/conversations/xagent" && r.Method == http.MethodPost:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(map[string]interface{}{"id": "conv-1"})
 		case r.URL.Path == "/api/chat/sync" && r.Method == http.MethodPost:
 			mu.Lock()
 			runIDHeaders = append(runIDHeaders, r.Header.Get("X-Axon-Run-Id"))

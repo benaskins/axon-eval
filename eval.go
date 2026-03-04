@@ -42,10 +42,15 @@ func (c *Client) Evaluate(description string, scenarios []EvalScenario) (*EvalRe
 	report := &EvalReport{}
 
 	for _, scenario := range scenarios {
+		conversationID, err := c.createConversation()
+		if err != nil {
+			return nil, fmt.Errorf("create conversation: %w", err)
+		}
+
 		// Send all messages, collect the last response
 		var lastResult ChatResult
 		for _, msg := range scenario.Messages {
-			chatResult, err := c.sendChat(msg, runID)
+			chatResult, err := c.sendChat(msg, runID, conversationID)
 			if err != nil {
 				return nil, fmt.Errorf("eval chat: %w", err)
 			}
