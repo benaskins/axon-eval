@@ -118,3 +118,70 @@ func TestClient_Run(t *testing.T) {
 		t.Errorf("expected 2 scenario responses, got %d", len(run.Responses))
 	}
 }
+
+func TestClient_Run_SetsRunIDHeader(t *testing.T) {
+	var mu sync.Mutex
+	var runIDHeaders []string
+
+	chatServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/internal/user-created":
+			w.WriteHeader(http.StatusOK)
+		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
+			w.WriteHeader(http.StatusOK)
+		case r.URL.Path == "/api/chat/sync" && r.Method == http.MethodPost:
+			mu.Lock()
+			runIDHeaders = append(runIDHeaders, r.Header.Get("X-Axon-Run-Id"))
+			mu.Unlock()
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"response":    "ok",
+				"duration_ms": 50,
+				"tools_used":  []string{},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer chatServer.Close()
+
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{
+			"user_id":       "test-user",
+			"session_token": "test-token",
+		})
+	}))
+	defer authServer.Close()
+
+	analyticsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer analyticsServer.Close()
+
+	client, err := NewClient(Config{
+		AuthURL:      authServer.URL,
+		ChatURL:      chatServer.URL,
+		AnalyticsURL: analyticsServer.URL,
+	})
+	if err != nil {
+		t.Fatalf("NewClient failed: %v", err)
+	}
+
+	run, err := client.Run("test", []Scenario{
+		Conversation("single", []Message{{Role: "user", Content: "Hi"}}),
+	})
+	if err != nil {
+		t.Fatalf("Run failed: %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(runIDHeaders) != 1 {
+		t.Fatalf("expected 1 chat request, got %d", len(runIDHeaders))
+	}
+	if runIDHeaders[0] != run.ID {
+		t.Errorf("expected X-Axon-Run-Id %q, got %q", run.ID, runIDHeaders[0])
+	}
+}

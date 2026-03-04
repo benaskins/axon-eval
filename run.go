@@ -121,6 +121,9 @@ func (c *Client) sendChat(msg Message, runID string) (*ChatResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
+	if runID != "" {
+		req.Header.Set("X-Axon-Run-Id", runID)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
