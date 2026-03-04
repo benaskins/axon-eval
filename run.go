@@ -111,8 +111,9 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 func (c *Client) sendChat(msg Message, runID string) (*ChatResult, error) {
 	chatReq := map[string]interface{}{
 		"agent_slug": "xagent",
-		"message":    msg.Content,
-		"run_id":     runID,
+		"messages": []map[string]string{
+			{"role": msg.Role, "content": msg.Content},
+		},
 	}
 	body, _ := json.Marshal(chatReq)
 

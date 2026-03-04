@@ -17,7 +17,9 @@ func TestClient_Evaluate(t *testing.T) {
 		case r.URL.Path == "/api/chat/sync" && r.Method == http.MethodPost:
 			var req map[string]interface{}
 			json.NewDecoder(r.Body).Decode(&req)
-			msg := req["message"].(string)
+			messages := req["messages"].([]interface{})
+			lastMsg := messages[len(messages)-1].(map[string]interface{})
+			msg := lastMsg["content"].(string)
 
 			response := "I don't know."
 			if msg == "What's 2+2?" {

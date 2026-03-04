@@ -31,7 +31,7 @@ type Client struct {
 func NewClient(cfg Config) (*Client, error) {
 	c := &Client{
 		config:     cfg,
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		httpClient: &http.Client{Timeout: 120 * time.Second},
 	}
 
 	if err := c.setupServiceUser(); err != nil {
@@ -100,6 +100,7 @@ func (c *Client) notifyUserCreated() error {
 
 func (c *Client) setupTestAgent() error {
 	agent := map[string]interface{}{
+		"slug":          "xagent",
 		"name":          "X Agent",
 		"system_prompt": "You are a test agent used for infrastructure verification and evaluation.",
 		"skills":        []string{"current_time", "web_search", "check_weather", "recall_memory"},
