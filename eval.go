@@ -18,6 +18,7 @@ type EvalScenario struct {
 type EvalResult struct {
 	Messages []Message
 	Response string
+	Result   ChatResult
 	Pass     bool
 	Reason   string
 }
@@ -42,19 +43,20 @@ func (c *Client) Evaluate(description string, scenarios []EvalScenario) (*EvalRe
 
 	for _, scenario := range scenarios {
 		// Send all messages, collect the last response
-		var lastResponse string
+		var lastResult ChatResult
 		for _, msg := range scenario.Messages {
-			response, err := c.sendChat(msg, runID)
+			chatResult, err := c.sendChat(msg, runID)
 			if err != nil {
 				return nil, fmt.Errorf("eval chat: %w", err)
 			}
-			lastResponse = response
+			lastResult = *chatResult
 		}
 
-		pass, reason := scenario.Check(lastResponse)
+		pass, reason := scenario.Check(lastResult.Response)
 		result := EvalResult{
 			Messages: scenario.Messages,
-			Response: lastResponse,
+			Response: lastResult.Response,
+			Result:   lastResult,
 			Pass:     pass,
 			Reason:   reason,
 		}

@@ -32,10 +32,18 @@ type Run struct {
 	Responses []ScenarioResult
 }
 
+// ChatResult holds the response from a synchronous chat request.
+type ChatResult struct {
+	Response   string   `json:"response"`
+	Thinking   string   `json:"thinking,omitempty"`
+	DurationMs int64    `json:"duration_ms"`
+	ToolsUsed  []string `json:"tools_used"`
+}
+
 // ScenarioResult holds the result of a single scenario.
 type ScenarioResult struct {
 	Name      string
-	Responses []string
+	Responses []ChatResult
 }
 
 func timeNowFormat() string {
@@ -56,11 +64,11 @@ func (c *Client) Run(description string, scenarios []Scenario) (*Run, error) {
 	for _, scenario := range scenarios {
 		result := ScenarioResult{Name: scenario.Name}
 		for _, msg := range scenario.Messages {
-			response, err := c.sendChat(msg, runID)
+			chatResult, err := c.sendChat(msg, runID)
 			if err != nil {
 				return nil, fmt.Errorf("scenario %q: %w", scenario.Name, err)
 			}
-			result.Responses = append(result.Responses, response)
+			result.Responses = append(result.Responses, *chatResult)
 		}
 		run.Responses = append(run.Responses, result)
 	}
@@ -100,7 +108,7 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 	return nil
 }
 
-func (c *Client) sendChat(msg Message, runID string) (string, error) {
+func (c *Client) sendChat(msg Message, runID string) (*ChatResult, error) {
 	chatReq := map[string]interface{}{
 		"agent_slug": "xagent",
 		"message":    msg.Content,
@@ -108,28 +116,26 @@ func (c *Client) sendChat(msg Message, runID string) (string, error) {
 	}
 	body, _ := json.Marshal(chatReq)
 
-	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/chat", bytes.NewReader(body))
+	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/chat/sync", bytes.NewReader(body))
 	if err != nil {
-		return "", fmt.Errorf("create request: %w", err)
+		return nil, fmt.Errorf("create request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("request failed: %w", err)
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	var result struct {
-		Response string `json:"response"`
-	}
+	var result ChatResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("decode response: %w", err)
+		return nil, fmt.Errorf("decode response: %w", err)
 	}
 
-	return result.Response, nil
+	return &result, nil
 }

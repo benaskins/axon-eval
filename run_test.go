@@ -19,17 +19,19 @@ func TestClient_Run(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
-		case r.URL.Path == "/api/chat" && r.Method == http.MethodPost:
+		case r.URL.Path == "/api/chat/sync" && r.Method == http.MethodPost:
 			var req map[string]interface{}
 			json.NewDecoder(r.Body).Decode(&req)
 			mu.Lock()
 			chatRequests = append(chatRequests, req)
 			mu.Unlock()
 
-			// Return a simple response
+			// Return a sync response
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{
-				"response": "Hello! I'm doing well.",
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"response":    "Hello! I'm doing well.",
+				"duration_ms": 100,
+				"tools_used":  []string{},
 			})
 		default:
 			http.NotFound(w, r)

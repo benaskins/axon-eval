@@ -14,7 +14,7 @@ func TestClient_Evaluate(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		case r.URL.Path == "/api/agents/xagent" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
-		case r.URL.Path == "/api/chat" && r.Method == http.MethodPost:
+		case r.URL.Path == "/api/chat/sync" && r.Method == http.MethodPost:
 			var req map[string]interface{}
 			json.NewDecoder(r.Body).Decode(&req)
 			msg := req["message"].(string)
@@ -27,7 +27,11 @@ func TestClient_Evaluate(t *testing.T) {
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"response": response})
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"response":    response,
+				"duration_ms": 100,
+				"tools_used":  []string{},
+			})
 		default:
 			http.NotFound(w, r)
 		}
