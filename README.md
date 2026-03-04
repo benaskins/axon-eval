@@ -1,4 +1,4 @@
-# axon-test
+# axon-eval
 
 An evaluation framework for running scenario plans against a live service cluster.
 
@@ -7,7 +7,7 @@ Supports YAML-defined test plans with assertions on HTTP responses and LLM-gener
 ## Install
 
 ```
-go get github.com/benaskins/axon-test@latest
+go get github.com/benaskins/axon-eval@latest
 ```
 
 Requires Go 1.25+.
@@ -15,12 +15,12 @@ Requires Go 1.25+.
 ## Usage
 
 ```go
-plan, _ := test.LoadPlan("plans/smoke.yaml")
-client := test.NewClient(test.Config{BaseURL: clusterURL})
+plan, _ := eval.LoadPlan("plans/smoke.yaml")
+client := eval.NewClient(eval.Config{BaseURL: clusterURL})
 
 for _, scenario := range plan.Scenarios {
     result, _ := client.RunScenario(ctx, scenario)
-    grade := test.GradeScenario(result, judge)
+    grade := eval.GradeScenario(result, judge)
 }
 ```
 

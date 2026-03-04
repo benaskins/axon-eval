@@ -1,4 +1,4 @@
-module github.com/benaskins/axon-test
+module github.com/benaskins/axon-eval
 
 go 1.25.0
 
