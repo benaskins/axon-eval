@@ -36,4 +36,4 @@ for _, scenario := range plan.Scenarios {
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
