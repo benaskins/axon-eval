@@ -19,7 +19,7 @@ func checkResponse(resp *http.Response, expectedStatus int) error {
 	return nil
 }
 
-// Config holds the URLs for the services that axon-test interacts with.
+// Config holds the URLs for the services that axon-eval interacts with.
 type Config struct {
 	AuthURL      string
 	ChatURL      string
