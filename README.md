@@ -1,6 +1,6 @@
 # axon-eval
 
-An evaluation framework for running scenario plans against a live service cluster.
+An evaluation framework for running scenario plans against a live service cluster. Part of [lamina](https://github.com/benaskins/lamina) — each axon package can be used independently.
 
 Supports YAML-defined test plans with assertions on HTTP responses and LLM-generated content.
 
