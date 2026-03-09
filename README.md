@@ -58,6 +58,8 @@ lamina eval plans/smoke.yaml
 
 - **`Plan`**, **`PlanScenario`** — YAML test plan structure with scenarios, rubrics, and tool expectations
 - **`Criterion`**, **`ToolExpect`** — assertion types: `contains`, `not_contains`, `min_length`, `max_length`, `llm_judge`
+- **`Scenario`**, **`Message`** — test scenario with a name and ordered messages to send
+- **`Conversation`** — constructor that builds a `Scenario` from a name and messages
 - **`Client`**, **`Config`** — HTTP client for running scenarios against auth, chat, and analytics services
 - **`Run`**, **`ScenarioResult`**, **`ChatResult`** — execution results with response text, duration, and tools used
 - **`Judge`**, **`OllamaJudge`** — LLM-based grading interface and Ollama-backed implementation
