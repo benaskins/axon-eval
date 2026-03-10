@@ -19,7 +19,7 @@ type VerifyResult struct {
 
 // Verify queries the analytics service for event counts from a specific run.
 func (c *Client) Verify(runID string) (*VerifyResult, error) {
-	req, err := http.NewRequest(http.MethodGet, c.config.AnalyticsURL+"/api/runs/"+runID+"/summary", nil)
+	req, err := c.authenticatedRequest(http.MethodGet, c.config.AnalyticsURL+"/api/runs/"+runID+"/summary", nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
