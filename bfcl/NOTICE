@@ -1,0 +1,16 @@
+Berkeley Function Calling Leaderboard (BFCL) Test Data
+======================================================
+
+The JSONL test data files in this directory are from the Berkeley Function
+Calling Leaderboard, part of the Gorilla project at UC Berkeley.
+
+Source: https://github.com/ShishirPatil/gorilla
+License: Apache License, Version 2.0
+URL: http://www.apache.org/licenses/LICENSE-2.0
+
+Citation:
+
+  Fanjia Yan, Huanzhi Mao, Charlie Cheng-Jie Ji, Tianjun Zhang,
+  Shishir G. Patil, Ion Stoica, Joseph E. Gonzalez.
+  "Berkeley Function Calling Leaderboard," 2024.
+  https://gorilla.cs.berkeley.edu/blogs/8_berkeley_function_calling_leaderboard.html
