@@ -52,7 +52,7 @@ func (r *Runner) Run(ctx context.Context, tc TestCase, cat Category) ([]loop.Too
 		Messages:      msgs,
 		Tools:         toolDefs,
 		Think:         &think,
-		Options:       map[string]any{"max_tokens": 300},
+		Options:       map[string]any{"max_tokens": 1024, "temperature": float64(0)},
 		MaxIterations: r.maxTurns,
 	}
 

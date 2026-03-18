@@ -2,8 +2,8 @@ github.com/andybalholm/cascadia v1.3.3 h1:AG2YHrzJIm4BZ19iwJ/DAua6Btl3IwJX+VI4kk
 github.com/andybalholm/cascadia v1.3.3/go.mod h1:xNd9bqTn98Ln4DwST8/nG+H0yuB8Hmgu1YHNnWw0GeA=
 github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de h1:FxWPpzIjnTlhPwqqXc4/vE0f7GvRjuAsbW+HOIe8KnA=
 github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de/go.mod h1:DCaWoUhZrYW9p1lxo/cm8EmUOOzAPSEZNGF2DK1dJgw=
-github.com/benaskins/axon v0.4.2 h1:Icb1GsX950xw0ukf0JhwB9yW3wAUm310R95s+FCGQCI=
-github.com/benaskins/axon v0.4.2/go.mod h1:Ee45fCSquU1tHR/hspDVG2ECB8cKhKpD2UXcOlfYZd0=
+github.com/benaskins/axon v0.4.3-0.20260318044304-f0d0166a2a0e h1:GE8b3QUM3aTXspNcusWfcljUGI7DwP022NWypc4eNfA=
+github.com/benaskins/axon v0.4.3-0.20260318044304-f0d0166a2a0e/go.mod h1:Ee45fCSquU1tHR/hspDVG2ECB8cKhKpD2UXcOlfYZd0=
 github.com/benaskins/axon-loop v0.3.0 h1:gkLby5gdX4v4RlYCPJQrNz55vukFaifpNBLJRUQaXG4=
 github.com/benaskins/axon-loop v0.3.0/go.mod h1:/DokwWh1+mEyplyhLUPov1PGl45M/X7ra4r8YsI8rkA=
 github.com/benaskins/axon-tool v0.1.0 h1:iuraVLDnGoBm8q13mA+XPw6Axx5HjBw9Qh6J2gk+uRs=

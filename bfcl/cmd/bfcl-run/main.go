@@ -273,7 +273,7 @@ func runDirect(client *cf.Client, model string, tc bfcl.TestCase, cat bfcl.Categ
 		Messages: msgs,
 		Tools:    tools,
 		Think:    &think,
-		Options:  map[string]any{"max_tokens": 300},
+		Options:  map[string]any{"max_tokens": 1024, "temperature": float64(0)},
 	}
 
 	start := time.Now()
