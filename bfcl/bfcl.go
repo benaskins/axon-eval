@@ -333,8 +333,76 @@ func valuesEqual(a, b any) bool {
 		return ab == bb
 	}
 
+	// Map comparison — recurse into nested objects.
+	// Ground truth maps have leaf values wrapped in acceptable-values arrays.
+	am, aIsMap := a.(map[string]any)
+	bm, bIsMap := b.(map[string]any)
+	if aIsMap && bIsMap {
+		return mapsMatch(am, bm)
+	}
+
+	// Slice comparison — element by element.
+	aSlice, aIsSlice := a.([]any)
+	bSlice, bIsSlice := b.([]any)
+	if aIsSlice && bIsSlice {
+		return slicesMatch(aSlice, bSlice)
+	}
+
 	// Fallback: compare normalized string representations.
 	return normalizeRepr(fmt.Sprintf("%v", a)) == normalizeRepr(fmt.Sprintf("%v", b))
+}
+
+// mapsMatch compares two maps recursively. The expected map (b) may
+// have leaf values wrapped in acceptable-values arrays from BFCL ground
+// truth format. If a value in b is a []any, try matching the actual
+// value against any element in that list.
+func mapsMatch(actual, expected map[string]any) bool {
+	for k, ev := range expected {
+		av, exists := actual[k]
+		if !exists {
+			// Check if the expected value indicates optional (empty string in list).
+			if acceptableList, ok := ev.([]any); ok {
+				optional := false
+				for _, v := range acceptableList {
+					if s, ok := v.(string); ok && s == "" {
+						optional = true
+						break
+					}
+				}
+				if optional {
+					continue
+				}
+			}
+			return false
+		}
+
+		// If the expected value is a []any, treat it as an acceptable-values list.
+		if acceptableList, ok := ev.([]any); ok {
+			if !valueMatches(av, acceptableList) {
+				return false
+			}
+		} else {
+			if !valuesEqual(av, ev) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// slicesMatch compares two slices element by element. Elements in the
+// expected slice that are themselves acceptable-values lists are handled
+// by trying each alternative.
+func slicesMatch(actual, expected []any) bool {
+	if len(actual) != len(expected) {
+		return false
+	}
+	for i := range expected {
+		if !valuesEqual(actual[i], expected[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // normalizeExpr normalizes equivalent mathematical notations so that

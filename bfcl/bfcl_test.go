@@ -114,6 +114,67 @@ func TestGrade_Simple_ArrayFormatting(t *testing.T) {
 	}
 }
 
+func TestGrade_Simple_NestedMap(t *testing.T) {
+	// Model returns map[department:Science], truth has map[department:[Science]]
+	calls := []loop.ToolCall{{
+		Name: "query",
+		Arguments: map[string]any{
+			"table":      "users",
+			"conditions": map[string]any{"department": "Science", "school": "Bluebird"},
+		},
+	}}
+	truth := []map[string]Params{{
+		"query": {
+			"table":      {"users"},
+			"conditions": {map[string]any{"department": []any{"Science"}, "school": []any{"Bluebird"}}},
+		},
+	}}
+	if !Grade(calls, truth, Simple) {
+		t.Error("expected nested map with acceptable-values lists to match")
+	}
+}
+
+func TestGrade_Simple_NestedMapWrongValue(t *testing.T) {
+	calls := []loop.ToolCall{{
+		Name: "query",
+		Arguments: map[string]any{
+			"conditions": map[string]any{"department": "Math"},
+		},
+	}}
+	truth := []map[string]Params{{
+		"query": {
+			"conditions": {map[string]any{"department": []any{"Science"}}},
+		},
+	}}
+	if Grade(calls, truth, Simple) {
+		t.Error("expected fail for wrong nested value")
+	}
+}
+
+func TestGrade_Simple_NestedArray(t *testing.T) {
+	// Array of maps — e.g. conditions=[{field: age, op: >}, {field: job, op: =}]
+	calls := []loop.ToolCall{{
+		Name: "query",
+		Arguments: map[string]any{
+			"conditions": []any{
+				map[string]any{"field": "age", "op": ">"},
+				map[string]any{"field": "job", "op": "="},
+			},
+		},
+	}}
+	truth := []map[string]Params{{
+		"query": {
+			"conditions": {[]any{
+				map[string]any{"field": []any{"age"}, "op": []any{">"}},
+				map[string]any{"field": []any{"job"}, "op": []any{"="}},
+			}},
+		},
+	}}
+	if !Grade(calls, truth, Simple) {
+		t.Error("expected nested array of maps to match")
+	}
+}
+
 func TestGrade_Simple_ExponentiationNotation(t *testing.T) {
 	calls := []loop.ToolCall{{
 		Name:      "calc",
