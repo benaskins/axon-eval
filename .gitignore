@@ -1,6 +1,7 @@
 # Build output
 bin/
 *.exe
+bfcl-run
 
 # Test artifacts
 coverage.out
