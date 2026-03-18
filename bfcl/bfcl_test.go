@@ -3,7 +3,9 @@ package bfcl
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	loop "github.com/benaskins/axon-loop"
 )
@@ -83,6 +85,45 @@ func TestGrade_Simple_OptionalMissing(t *testing.T) {
 	}}
 	if !Grade(calls, truth, Simple) {
 		t.Error("expected pass when optional param missing")
+	}
+}
+
+func TestGrade_Simple_ScientificNotation(t *testing.T) {
+	calls := []loop.ToolCall{{
+		Name:      "calc",
+		Arguments: map[string]any{"charge": "1e-9"},
+	}}
+	truth := []map[string]Params{{
+		"calc": {"charge": {float64(1e-09)}},
+	}}
+	if !Grade(calls, truth, Simple) {
+		t.Error("expected string '1e-9' to match float 1e-09")
+	}
+}
+
+func TestGrade_Simple_ArrayFormatting(t *testing.T) {
+	calls := []loop.ToolCall{{
+		Name:      "calc",
+		Arguments: map[string]any{"interval": []any{float64(1), float64(3)}},
+	}}
+	truth := []map[string]Params{{
+		"calc": {"interval": {[]any{float64(1), float64(3)}}},
+	}}
+	if !Grade(calls, truth, Simple) {
+		t.Error("expected array values to match")
+	}
+}
+
+func TestGrade_Simple_ExponentiationNotation(t *testing.T) {
+	calls := []loop.ToolCall{{
+		Name:      "calc",
+		Arguments: map[string]any{"function": "3x^2 + 2x - 1"},
+	}}
+	truth := []map[string]Params{{
+		"calc": {"function": {"3x**2 + 2x - 1"}},
+	}}
+	if !Grade(calls, truth, Simple) {
+		t.Error("expected ^ and ** to be treated as equivalent")
 	}
 }
 
@@ -166,6 +207,45 @@ func TestToMessages(t *testing.T) {
 	got := ToMessages(msgs)
 	if len(got) != 1 || got[0].Role != "user" || got[0].Content != "hello" {
 		t.Errorf("got %+v", got)
+	}
+}
+
+func TestFormatResult(t *testing.T) {
+	r := Result{ID: "test_0", Pass: true, Expected: "f(x=1)", Got: "f(x=1)", DurationMs: 100}
+	got := FormatResult(r)
+	if !strings.Contains(got, "PASS") {
+		t.Errorf("expected PASS in %q", got)
+	}
+
+	r.Pass = false
+	got = FormatResult(r)
+	if !strings.Contains(got, "FAIL") {
+		t.Errorf("expected FAIL in %q", got)
+	}
+
+	r.Error = "timeout"
+	got = FormatResult(r)
+	if !strings.Contains(got, "ERR") {
+		t.Errorf("expected ERR in %q", got)
+	}
+}
+
+func TestFormatGot(t *testing.T) {
+	calls := []loop.ToolCall{{
+		Name:      "search",
+		Arguments: map[string]any{"q": "test"},
+	}}
+	got := FormatGot(calls)
+	if !strings.Contains(got, "search") {
+		t.Errorf("expected search in %q", got)
+	}
+}
+
+func TestElapsed(t *testing.T) {
+	start := time.Now()
+	ms := Elapsed(start)
+	if ms < 0 {
+		t.Errorf("elapsed = %d, want >= 0", ms)
 	}
 }
 

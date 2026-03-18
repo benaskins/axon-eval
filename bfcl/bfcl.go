@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -283,18 +284,18 @@ func valueMatches(actual any, acceptable []any) bool {
 }
 
 func valuesEqual(a, b any) bool {
-	// Normalize numbers — JSON unmarshals to float64.
-	af, aIsNum := toFloat(a)
-	bf, bIsNum := toFloat(b)
+	// Try numeric comparison first — covers float64, int, and numeric strings.
+	af, aIsNum := toFloatLoose(a)
+	bf, bIsNum := toFloatLoose(b)
 	if aIsNum && bIsNum {
 		return af == bf
 	}
 
-	// String comparison (case-insensitive).
+	// String comparison (case-insensitive, normalize exponentiation).
 	as, aIsStr := a.(string)
 	bs, bIsStr := b.(string)
 	if aIsStr && bIsStr {
-		return strings.EqualFold(as, bs)
+		return strings.EqualFold(normalizeExpr(as), normalizeExpr(bs))
 	}
 
 	// Bool comparison.
@@ -304,10 +305,18 @@ func valuesEqual(a, b any) bool {
 		return ab == bb
 	}
 
-	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
+	// Fallback: compare normalized string representations.
+	return normalizeRepr(fmt.Sprintf("%v", a)) == normalizeRepr(fmt.Sprintf("%v", b))
 }
 
-func toFloat(v any) (float64, bool) {
+// normalizeExpr normalizes equivalent mathematical notations so that
+// e.g. "x^2" and "x**2" are treated as equal.
+func normalizeExpr(s string) string {
+	return strings.ReplaceAll(s, "^", "**")
+}
+
+// toFloatLoose converts numeric types and numeric strings to float64.
+func toFloatLoose(v any) (float64, bool) {
 	switch n := v.(type) {
 	case float64:
 		return n, true
@@ -320,8 +329,18 @@ func toFloat(v any) (float64, bool) {
 	case json.Number:
 		f, err := n.Float64()
 		return f, err == nil
+	case string:
+		f, err := strconv.ParseFloat(n, 64)
+		return f, err == nil
 	}
 	return 0, false
+}
+
+// normalizeRepr normalizes Go's %v formatting for cross-type comparison.
+// Handles differences like "[1 3]" vs "[1, 3]" for slice representations.
+func normalizeRepr(s string) string {
+	s = strings.ReplaceAll(s, ", ", " ")
+	return s
 }
 
 // FormatResult returns a human-readable summary line.
