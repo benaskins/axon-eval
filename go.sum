@@ -6,8 +6,8 @@ github.com/benaskins/axon v0.4.3-0.20260318044304-f0d0166a2a0e h1:GE8b3QUM3aTXsp
 github.com/benaskins/axon v0.4.3-0.20260318044304-f0d0166a2a0e/go.mod h1:Ee45fCSquU1tHR/hspDVG2ECB8cKhKpD2UXcOlfYZd0=
 github.com/benaskins/axon-loop v0.3.0 h1:gkLby5gdX4v4RlYCPJQrNz55vukFaifpNBLJRUQaXG4=
 github.com/benaskins/axon-loop v0.3.0/go.mod h1:/DokwWh1+mEyplyhLUPov1PGl45M/X7ra4r8YsI8rkA=
-github.com/benaskins/axon-tool v0.1.0 h1:iuraVLDnGoBm8q13mA+XPw6Axx5HjBw9Qh6J2gk+uRs=
-github.com/benaskins/axon-tool v0.1.0/go.mod h1:ExEoZ8sgPlg4Fj9yGLESkAs7Q8jvI0ntsgox4PfBsLU=
+github.com/benaskins/axon-tool v0.1.6-0.20260318052517-9f206f3cecca h1:E0db2foxnGiIEv+uqgL4CzeMamiFE87o7oeewJ35lCk=
+github.com/benaskins/axon-tool v0.1.6-0.20260318052517-9f206f3cecca/go.mod h1:RYjjCx5vt/TRl+uUmEWYXeF5yJNNNW6irJhAc4frcQI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

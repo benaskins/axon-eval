@@ -47,8 +47,13 @@ type ParamSpec struct {
 
 // PropertySpec describes a single parameter.
 type PropertySpec struct {
-	Type        string `json:"type"`
-	Description string `json:"description"`
+	Type        string                  `json:"type"`
+	Description string                  `json:"description"`
+	Enum        []any                   `json:"enum,omitempty"`
+	Default     any                     `json:"default,omitempty"`
+	Items       *PropertySpec           `json:"items,omitempty"`
+	Properties  map[string]PropertySpec `json:"properties,omitempty"`
+	Required    []string                `json:"required,omitempty"`
 }
 
 // Params maps parameter names to lists of acceptable values.
@@ -146,17 +151,6 @@ func loadAnswers(path string) (map[string][]map[string]Params, error) {
 func ToTools(defs []FunctionDef) []tool.ToolDef {
 	out := make([]tool.ToolDef, len(defs))
 	for i, d := range defs {
-		props := make(map[string]tool.PropertySchema, len(d.Parameters.Properties))
-		for name, p := range d.Parameters.Properties {
-			typ := p.Type
-			if typ == "integer" || typ == "float" || typ == "double" {
-				typ = "number"
-			}
-			props[name] = tool.PropertySchema{
-				Type:        typ,
-				Description: p.Description,
-			}
-		}
 		paramType := d.Parameters.Type
 		if paramType == "dict" {
 			paramType = "object"
@@ -167,11 +161,45 @@ func ToTools(defs []FunctionDef) []tool.ToolDef {
 			Parameters: tool.ParameterSchema{
 				Type:       paramType,
 				Required:   d.Parameters.Required,
-				Properties: props,
+				Properties: convertProperties(d.Parameters.Properties),
 			},
 		}
 	}
 	return out
+}
+
+func convertProperties(props map[string]PropertySpec) map[string]tool.PropertySchema {
+	if len(props) == 0 {
+		return nil
+	}
+	out := make(map[string]tool.PropertySchema, len(props))
+	for name, p := range props {
+		out[name] = convertProperty(p)
+	}
+	return out
+}
+
+func convertProperty(p PropertySpec) tool.PropertySchema {
+	typ := p.Type
+	if typ == "integer" || typ == "float" || typ == "double" {
+		typ = "number"
+	}
+	if typ == "dict" {
+		typ = "object"
+	}
+	ps := tool.PropertySchema{
+		Type:        typ,
+		Description: p.Description,
+		Enum:        p.Enum,
+		Default:     p.Default,
+		Required:    p.Required,
+		Properties:  convertProperties(p.Properties),
+	}
+	if p.Items != nil {
+		items := convertProperty(*p.Items)
+		ps.Items = &items
+	}
+	return ps
 }
 
 // ToMessages converts BFCL question messages to loop messages.
