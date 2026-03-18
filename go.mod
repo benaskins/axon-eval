@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/benaskins/axon-loop v0.3.0
-	github.com/benaskins/axon-talk v0.3.0
+	github.com/benaskins/axon-talk v0.4.0
 	github.com/benaskins/axon-tool v0.1.6
 	gopkg.in/yaml.v3 v3.0.1
 )

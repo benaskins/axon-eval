@@ -45,6 +45,7 @@ func main() {
 		category = flag.String("category", "", "run only this category")
 		workers  = flag.Int("workers", 10, "concurrent workers")
 		useLoop  = flag.Bool("loop", false, "use axon-loop (retries, tool stub execution)")
+		useStream = flag.Bool("stream", false, "enable SSE streaming")
 		verbose  = flag.Bool("v", false, "print each result")
 	)
 	flag.Parse()
@@ -117,7 +118,7 @@ func main() {
 
 		fmt.Printf("\n--- %s (%d cases, %d workers) ---\n", cat.name, len(cases), *workers)
 
-		results := runCategory(client, *model, cat.name, cases, *workers, *useLoop)
+		results := runCategory(client, *model, cat.name, cases, *workers, *useLoop, *useStream)
 		allCatResults = append(allCatResults, catResult{cat.name, results})
 
 		passed, failed, errors := 0, 0, 0
@@ -214,7 +215,7 @@ func main() {
 	}
 }
 
-func runCategory(client *cf.Client, model string, cat bfcl.Category, cases []bfcl.TestCase, numWorkers int, useLoop bool) []bfcl.Result {
+func runCategory(client *cf.Client, model string, cat bfcl.Category, cases []bfcl.TestCase, numWorkers int, useLoop bool, useStream bool) []bfcl.Result {
 	results := make([]bfcl.Result, len(cases))
 	jobs := make(chan job, len(cases))
 
@@ -237,7 +238,7 @@ func runCategory(client *cf.Client, model string, cat bfcl.Category, cases []bfc
 				if runner != nil {
 					r = runWithLoop(runner, j.tc, j.cat)
 				} else {
-					r = runDirect(client, model, j.tc, j.cat)
+					r = runDirect(client, model, j.tc, j.cat, useStream)
 				}
 				results[j.index] = r
 				n := done.Add(1)
@@ -263,7 +264,7 @@ func runCategory(client *cf.Client, model string, cat bfcl.Category, cases []bfc
 	return results
 }
 
-func runDirect(client *cf.Client, model string, tc bfcl.TestCase, cat bfcl.Category) bfcl.Result {
+func runDirect(client *cf.Client, model string, tc bfcl.TestCase, cat bfcl.Category, stream bool) bfcl.Result {
 	think := false
 	msgs := bfcl.ToMessages(tc.Question[0])
 	tools := bfcl.ToTools(tc.Functions)
@@ -272,6 +273,7 @@ func runDirect(client *cf.Client, model string, tc bfcl.TestCase, cat bfcl.Categ
 		Model:    model,
 		Messages: msgs,
 		Tools:    tools,
+		Stream:   stream,
 		Think:    &think,
 		Options:  map[string]any{"max_tokens": 1024, "temperature": float64(0)},
 	}
@@ -279,6 +281,16 @@ func runDirect(client *cf.Client, model string, tc bfcl.TestCase, cat bfcl.Categ
 	start := time.Now()
 	var resp loop.Response
 	err := client.Chat(context.Background(), req, func(r loop.Response) error {
+		// When streaming, accumulate content and tool calls across chunks.
+		if stream {
+			resp.Content += r.Content
+			resp.Thinking += r.Thinking
+			resp.ToolCalls = append(resp.ToolCalls, r.ToolCalls...)
+			if r.Done {
+				resp.Done = true
+			}
+			return nil
+		}
 		resp = r
 		return nil
 	})
