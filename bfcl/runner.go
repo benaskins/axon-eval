@@ -63,7 +63,12 @@ func (r *Runner) Run(ctx context.Context, tc TestCase, cat Category) ([]loop.Too
 		},
 	}
 
-	_, err := loop.Run(ctx, r.client, req, toolMap, nil, cb)
+	_, err := loop.Run(ctx, loop.RunConfig{
+		Client:    r.client,
+		Request:   req,
+		Tools:     toolMap,
+		Callbacks: cb,
+	})
 	if err != nil {
 		// Max iterations exceeded is expected — it means the model
 		// kept calling tools. Return what we collected.

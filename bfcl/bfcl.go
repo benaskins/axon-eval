@@ -206,7 +206,7 @@ func convertProperty(p PropertySpec) tool.PropertySchema {
 func ToMessages(msgs []Message) []loop.Message {
 	out := make([]loop.Message, len(msgs))
 	for i, m := range msgs {
-		out[i] = loop.Message{Role: m.Role, Content: m.Content}
+		out[i] = loop.Message{Role: loop.Role(m.Role), Content: m.Content}
 	}
 	return out
 }
