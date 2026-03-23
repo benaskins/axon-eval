@@ -10,7 +10,7 @@ Evaluation framework for scenario testing against live services. Define test pla
 go get github.com/benaskins/axon-eval@latest
 ```
 
-Requires Go 1.25+.
+Requires Go 1.26+.
 
 Create a plan file (see [`example/smoke.yaml`](example/smoke.yaml)):
 
