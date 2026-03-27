@@ -1,3 +1,8 @@
+---
+module: github.com/benaskins/axon-eval
+kind: tool
+---
+
 # axon-eval
 
 Evaluation framework for running scenario plans against a live service cluster.
