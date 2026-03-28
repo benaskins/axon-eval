@@ -1,0 +1,10 @@
+name: axon-eval
+purpose: Evaluation framework for scenario plans
+use_when: LLM output evaluation
+deterministic: true
+snippet:
+  imports:
+    - path: github.com/benaskins/axon-eval
+      alias: eval
+  requires:
+    - github.com/benaskins/axon-eval
