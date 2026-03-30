@@ -67,12 +67,13 @@ type Answer struct {
 
 // Result is the outcome of running one test case.
 type Result struct {
-	ID         string
-	Pass       bool
-	Expected   string
-	Got        string
-	DurationMs int64
-	Error      string
+	ID         string   `json:"id"`
+	Category   Category `json:"category"`
+	Pass       bool     `json:"pass"`
+	Expected   string   `json:"expected"`
+	Got        string   `json:"got"`
+	DurationMs int64    `json:"duration_ms"`
+	Error      string   `json:"error,omitempty"`
 }
 
 // Summary aggregates results across all test cases.
@@ -84,6 +85,27 @@ type Summary struct {
 	Accuracy   float64
 	AvgLatency float64
 	Results    []Result
+}
+
+// RunReport is the enriched JSON output for eval-ingest.
+// bfcl-run writes this to stdout; text summaries go to stderr.
+type RunReport struct {
+	RunID      string         `json:"run_id"`
+	Model      string         `json:"model"`
+	Provider   string         `json:"provider"`
+	Parameters map[string]any `json:"parameters"`
+	Results    []Result       `json:"results"`
+	Summary    ReportSummary  `json:"summary"`
+}
+
+// ReportSummary is the aggregate section of a RunReport.
+type ReportSummary struct {
+	Total      int     `json:"total"`
+	Passed     int     `json:"passed"`
+	Failed     int     `json:"failed"`
+	Errors     int     `json:"errors"`
+	Accuracy   float64 `json:"accuracy"`
+	AvgLatency float64 `json:"avg_latency_ms"`
 }
 
 // LoadTestCases loads BFCL test cases and their ground truth answers.
