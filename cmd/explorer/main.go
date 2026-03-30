@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/benaskins/axon-eval/explorer"
+	"github.com/benaskins/axon-talk/openai"
 )
 
 func main() {
@@ -17,8 +18,9 @@ func main() {
 	}
 
 	srv := explorer.NewServer(cfg)
+	srv.SetLLM(openai.NewClient(cfg.ModelURL, ""))
 
-	slog.Info("explorer starting", "port", cfg.Port, "model", cfg.Model)
+	slog.Info("explorer starting", "port", cfg.Port, "model_url", cfg.ModelURL, "model", cfg.Model)
 	if err := http.ListenAndServe(":"+cfg.Port, srv.Handler()); err != nil {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
