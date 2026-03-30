@@ -1,0 +1,7 @@
+name: bfcl-27b-4bit-full
+model: /Users/benaskins/models/mlx/Qwen3.5-27B-4bit
+server: vllm-mlx
+server_args: --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3
+command: go run ./bfcl/cmd/bfcl-run/ -dir bfcl/ -provider local -url http://localhost:${PORT} -model ${MODEL} -workers 1 -v
+workdir: /Users/benaskins/dev/lamina/axon-eval
+priority: 50
