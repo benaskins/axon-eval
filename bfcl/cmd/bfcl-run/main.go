@@ -6,7 +6,7 @@
 //
 // Usage:
 //
-//	bfcl-run -dir bfcl/ -model @cf/qwen/qwen3-30b-a3b-fp8
+//	bfcl-run -dir bfcl/ -url http://localhost:8091 -model qwen3.5-122b
 //	bfcl-run -dir bfcl/ -category simple -limit 20 -v
 //	bfcl-run -dir bfcl/ -workers 10 | eval-ingest
 package main
@@ -25,7 +25,7 @@ import (
 
 	"github.com/benaskins/axon-eval/bfcl"
 	loop "github.com/benaskins/axon-loop"
-	cf "github.com/benaskins/axon-talk/cloudflare"
+	"github.com/benaskins/axon-talk/openai"
 )
 
 type categorySpec struct {
@@ -91,7 +91,7 @@ func main() {
 		categories = filtered
 	}
 
-	client := cf.NewClient(*baseURL, *token)
+	client := openai.NewClient(*baseURL, *token)
 	runID := newRunID()
 
 	var allResults []bfcl.Result
@@ -244,7 +244,7 @@ func main() {
 	}
 }
 
-func runCategory(client *cf.Client, model string, cat bfcl.Category, cases []bfcl.TestCase, numWorkers int, useLoop bool, useStream bool) []bfcl.Result {
+func runCategory(client *openai.Client, model string, cat bfcl.Category, cases []bfcl.TestCase, numWorkers int, useLoop bool, useStream bool) []bfcl.Result {
 	results := make([]bfcl.Result, len(cases))
 	jobs := make(chan job, len(cases))
 
@@ -294,7 +294,7 @@ func runCategory(client *cf.Client, model string, cat bfcl.Category, cases []bfc
 	return results
 }
 
-func runDirect(client *cf.Client, model string, tc bfcl.TestCase, cat bfcl.Category, stream bool) bfcl.Result {
+func runDirect(client *openai.Client, model string, tc bfcl.TestCase, cat bfcl.Category, stream bool) bfcl.Result {
 	think := false
 	msgs := bfcl.ToMessages(tc.Question[0])
 	tools := bfcl.ToTools(tc.Functions)
