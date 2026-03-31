@@ -11,3 +11,8 @@ coverage.html
 .idea/
 .vscode/
 *.swp
+
+# Eval logs and results
+autotune/*.log
+autotune/*-results.tsv
+bfcl/results/
