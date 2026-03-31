@@ -197,7 +197,7 @@ process_pending() {
     done
 
     # Run same-model jobs first, then others
-    for f in "${by_model[@]}" "${other[@]}"; do
+    for f in ${by_model[@]+"${by_model[@]}"} ${other[@]+"${other[@]}"}; do
         run_job "$f"
     done
 }
