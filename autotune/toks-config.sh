@@ -1,0 +1,25 @@
+# Tunable configuration for tok/s optimization. THIS IS THE FILE YOU EDIT.
+
+# Model
+MODEL_PATH="/Users/benaskins/models/mlx/Qwen3.5-122B-A10B-5bit"
+
+# Server parameters
+PORT=8091
+MAX_NUM_SEQS=4
+PREFILL_BATCH_SIZE=""
+COMPLETION_BATCH_SIZE=""
+CONTINUOUS_BATCHING=true
+PREFIX_CACHE=true
+CACHE_MEMORY_PERCENT=""
+KV_CACHE_QUANTIZATION=false
+KV_CACHE_QUANT_BITS=""         # 4 or 8
+KV_CACHE_GROUP_SIZE=""         # default 64
+PAGED_CACHE=false
+PAGED_CACHE_BLOCK_SIZE=""
+MAX_CACHE_BLOCKS=""
+EXTRA_ARGS=""
+
+# Eval parameters
+NUM_REQUESTS=10
+MAX_TOKENS=256
+CONCURRENT=4
