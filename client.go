@@ -69,10 +69,13 @@ func NewClient(cfg Config) (*Client, error) {
 }
 
 func (c *Client) setupServiceUser() error {
-	body, _ := json.Marshal(map[string]string{
+	body, err := json.Marshal(map[string]string{
 		"username":     "xagent-runner",
 		"display_name": "Test Runner",
 	})
+	if err != nil {
+		return fmt.Errorf("marshal request: %w", err)
+	}
 
 	resp, err := c.httpClient.Post(c.config.AuthURL+"/internal/service-user", "application/json", bytes.NewReader(body))
 	if err != nil {
@@ -98,9 +101,12 @@ func (c *Client) setupServiceUser() error {
 }
 
 func (c *Client) notifyUserCreated() error {
-	body, _ := json.Marshal(map[string]string{
+	body, err := json.Marshal(map[string]string{
 		"user_id": c.userID,
 	})
+	if err != nil {
+		return fmt.Errorf("marshal request: %w", err)
+	}
 
 	resp, err := c.httpClient.Post(c.config.ChatURL+"/internal/user-created", "application/json", bytes.NewReader(body))
 	if err != nil {
@@ -123,7 +129,10 @@ func (c *Client) setupTestAgent() error {
 		"system_prompt": "You are a test agent used for infrastructure verification and evaluation.",
 		"skills":        []string{"current_time", "web_search", "check_weather", "recall_memory"},
 	}
-	body, _ := json.Marshal(agent)
+	body, err := json.Marshal(agent)
+	if err != nil {
+		return fmt.Errorf("marshal request: %w", err)
+	}
 
 	req, err := http.NewRequest(http.MethodPut, c.config.ChatURL+"/api/agents/"+slug, bytes.NewReader(body))
 	if err != nil {

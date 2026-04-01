@@ -54,10 +54,13 @@ func (h *chatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := h.llm.Chat(r.Context(), llmReq, func(resp loop.Response) error {
 		if resp.Content != "" {
-			data, _ := json.Marshal(map[string]any{
+			data, err := json.Marshal(map[string]any{
 				"type":    "content",
 				"content": resp.Content,
 			})
+			if err != nil {
+				return fmt.Errorf("marshal content event: %w", err)
+			}
 			fmt.Fprintf(w, "data: %s\n\n", data)
 			if f, ok := w.(http.Flusher); ok {
 				f.Flush()
@@ -66,11 +69,14 @@ func (h *chatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if len(resp.ToolCalls) > 0 {
 			for _, tc := range resp.ToolCalls {
-				data, _ := json.Marshal(map[string]any{
+				data, err := json.Marshal(map[string]any{
 					"type":      "tool_call",
 					"name":      tc.Name,
 					"arguments": tc.Arguments,
 				})
+				if err != nil {
+					return fmt.Errorf("marshal tool_call event: %w", err)
+				}
 				fmt.Fprintf(w, "data: %s\n\n", data)
 				if f, ok := w.(http.Flusher); ok {
 					f.Flush()
@@ -89,10 +95,14 @@ func (h *chatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		data, _ := json.Marshal(map[string]any{
+		data, marshalErr := json.Marshal(map[string]any{
 			"type":  "error",
 			"error": err.Error(),
 		})
-		fmt.Fprintf(w, "data: %s\n\n", data)
+		if marshalErr != nil {
+			fmt.Fprintf(w, "data: {\"type\":\"error\",\"error\":\"internal error\"}\n\n")
+		} else {
+			fmt.Fprintf(w, "data: %s\n\n", data)
+		}
 	}
 }

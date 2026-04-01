@@ -104,7 +104,10 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 			"description": description,
 		},
 	}
-	body, _ := json.Marshal(events)
+	body, err := json.Marshal(events)
+	if err != nil {
+		return fmt.Errorf("marshal events: %w", err)
+	}
 
 	resp, err := c.httpClient.Post(c.config.AnalyticsURL+"/api/events", "application/json", bytes.NewReader(body))
 	if err != nil {
@@ -121,8 +124,14 @@ func (c *Client) emitRunEvent(eventType, runID, description string) error {
 
 // EmitEvalResult sends an eval_result event to the analytics service.
 func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatResult) error {
-	criteriaJSON, _ := json.Marshal(grade.Results)
-	toolsJSON, _ := json.Marshal(result.ToolsUsed)
+	criteriaJSON, err := json.Marshal(grade.Results)
+	if err != nil {
+		return fmt.Errorf("marshal criteria: %w", err)
+	}
+	toolsJSON, err := json.Marshal(result.ToolsUsed)
+	if err != nil {
+		return fmt.Errorf("marshal tools: %w", err)
+	}
 
 	events := []map[string]interface{}{
 		{
@@ -141,7 +150,10 @@ func (c *Client) EmitEvalResult(runID string, grade *ScenarioGrade, result ChatR
 			"criteria":    json.RawMessage(criteriaJSON),
 		},
 	}
-	body, _ := json.Marshal(events)
+	body, err := json.Marshal(events)
+	if err != nil {
+		return fmt.Errorf("marshal events: %w", err)
+	}
 
 	resp, err := c.httpClient.Post(c.config.AnalyticsURL+"/api/events", "application/json", bytes.NewReader(body))
 	if err != nil {
@@ -191,7 +203,10 @@ func (c *Client) sendChat(msg Message, runID, conversationID string) (*ChatResul
 			{"role": msg.Role, "content": msg.Content},
 		},
 	}
-	body, _ := json.Marshal(chatReq)
+	body, err := json.Marshal(chatReq)
+	if err != nil {
+		return nil, fmt.Errorf("marshal request: %w", err)
+	}
 
 	req, err := c.authenticatedRequest(http.MethodPost, c.config.ChatURL+"/api/chat/sync", bytes.NewReader(body))
 	if err != nil {

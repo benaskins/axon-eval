@@ -62,7 +62,11 @@ func main() {
 	}
 
 	// Convert results to facts.
-	params, _ := json.Marshal(report.Parameters)
+	params, err := json.Marshal(report.Parameters)
+	if err != nil {
+		slog.Error("marshal parameters", "error", err)
+		os.Exit(1)
+	}
 	now := time.Now().UTC()
 
 	facts := make([]fact.Fact, 0, len(report.Results))
