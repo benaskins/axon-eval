@@ -14,12 +14,15 @@ func TestOllamaJudge_Grade(t *testing.T) {
 			Score:  0.9,
 			Reason: "Response is warm and friendly",
 		}
-		data, _ := json.Marshal(result)
+		data, err := json.Marshal(result)
+		if err != nil {
+			t.Fatalf("marshal result: %v", err)
+		}
 		return string(data), nil
 	}
 
 	judge := NewOllamaJudge(generate)
-	result, err := judge.Grade("Hello! How can I help?", "A warm greeting", "Response is warm and conversational")
+	result, err := judge.Grade(context.Background(), "Hello! How can I help?", "A warm greeting", "Response is warm and conversational")
 	if err != nil {
 		t.Fatalf("Grade: %v", err)
 	}
@@ -41,7 +44,7 @@ func TestOllamaJudge_GradeMarkdownFence(t *testing.T) {
 	}
 
 	judge := NewOllamaJudge(generate)
-	result, err := judge.Grade("Hi", "A detailed greeting", "Response is detailed")
+	result, err := judge.Grade(context.Background(), "Hi", "A detailed greeting", "Response is detailed")
 	if err != nil {
 		t.Fatalf("Grade: %v", err)
 	}
@@ -60,7 +63,7 @@ func TestOllamaJudge_GradeInvalidJSON(t *testing.T) {
 	}
 
 	judge := NewOllamaJudge(generate)
-	_, err := judge.Grade("hi", "greeting", "warm")
+	_, err := judge.Grade(context.Background(), "hi", "greeting", "warm")
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
@@ -74,7 +77,7 @@ func TestOllamaJudge_PromptContainsCriterion(t *testing.T) {
 	}
 
 	judge := NewOllamaJudge(generate)
-	judge.Grade("response text", "ideal text", "is warm and friendly")
+	judge.Grade(context.Background(), "response text", "ideal text", "is warm and friendly")
 
 	if capturedPrompt == "" {
 		t.Fatal("expected prompt to be captured")
@@ -104,7 +107,7 @@ func TestGradeScenario_WithJudge(t *testing.T) {
 	}
 	result := ChatResult{Response: "hello world", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, judge)
+	grade := GradeScenario(context.Background(), scenario, result, judge)
 	if grade.Passed != 2 {
 		t.Errorf("Passed = %d, want 2", grade.Passed)
 	}

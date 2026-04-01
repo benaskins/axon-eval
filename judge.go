@@ -22,10 +22,10 @@ func NewOllamaJudge(generate TextGenerator) *OllamaJudge {
 
 // Grade sends the response, ideal response, and criterion to the LLM judge
 // and parses a structured JSON result.
-func (j *OllamaJudge) Grade(response, idealResponse, criterion string) (*JudgeResult, error) {
+func (j *OllamaJudge) Grade(ctx context.Context, response, idealResponse, criterion string) (*JudgeResult, error) {
 	prompt := buildJudgePrompt(response, idealResponse, criterion)
 
-	text, err := j.generate(context.Background(), prompt, 0.3, 512)
+	text, err := j.generate(ctx, prompt, 0.3, 512)
 	if err != nil {
 		return nil, fmt.Errorf("judge generate: %w", err)
 	}

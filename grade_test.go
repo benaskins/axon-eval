@@ -1,6 +1,9 @@
 package eval
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestGradeScenario_Contains(t *testing.T) {
 	scenario := PlanScenario{
@@ -12,7 +15,7 @@ func TestGradeScenario_Contains(t *testing.T) {
 	}
 	result := ChatResult{Response: "hello world", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if len(grade.Results) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(grade.Results))
 	}
@@ -31,7 +34,7 @@ func TestGradeScenario_ContainsFail(t *testing.T) {
 	}
 	result := ChatResult{Response: "hello world", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if grade.Results[0].Pass {
 		t.Errorf("expected fail for contains 'xyz'")
 	}
@@ -50,7 +53,7 @@ func TestGradeScenario_NotContains(t *testing.T) {
 	}
 	result := ChatResult{Response: "all good", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if !grade.Results[0].Pass {
 		t.Errorf("expected pass for not_contains 'error'")
 	}
@@ -66,7 +69,7 @@ func TestGradeScenario_MinLength(t *testing.T) {
 	}
 	result := ChatResult{Response: "hello world", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if !grade.Results[0].Pass {
 		t.Errorf("expected pass for min_length 5 with 11 chars")
 	}
@@ -82,7 +85,7 @@ func TestGradeScenario_MaxLength(t *testing.T) {
 	}
 	result := ChatResult{Response: "hello world", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if grade.Results[0].Pass {
 		t.Errorf("expected fail for max_length 5 with 11 chars")
 	}
@@ -98,7 +101,7 @@ func TestGradeScenario_ToolExpect(t *testing.T) {
 	}
 	result := ChatResult{Response: "sunny", DurationMs: 100, ToolsUsed: []string{"check_weather"}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 
 	// Should have auto-generated tool_used criterion
 	found := false
@@ -125,7 +128,7 @@ func TestGradeScenario_ToolReject(t *testing.T) {
 	}
 	result := ChatResult{Response: "answer", DurationMs: 100, ToolsUsed: []string{"web_search"}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 
 	found := false
 	for _, r := range grade.Results {
@@ -149,7 +152,7 @@ func TestGradeScenario_MaxDuration(t *testing.T) {
 	}
 	result := ChatResult{Response: "hi", DurationMs: 2000, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 
 	found := false
 	for _, r := range grade.Results {
@@ -175,7 +178,7 @@ func TestGradeScenario_LLMJudgeSkippedWithoutJudge(t *testing.T) {
 	}
 	result := ChatResult{Response: "hi", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if len(grade.Results) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(grade.Results))
 	}
@@ -199,7 +202,7 @@ func TestGradeScenario_PassRate(t *testing.T) {
 	}
 	result := ChatResult{Response: "hello world", DurationMs: 100, ToolsUsed: []string{}}
 
-	grade := GradeScenario(scenario, result, nil)
+	grade := GradeScenario(context.Background(), scenario, result, nil)
 	if grade.Passed != 2 {
 		t.Errorf("Passed = %d, want 2", grade.Passed)
 	}

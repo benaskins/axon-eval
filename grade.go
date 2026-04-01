@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -32,12 +33,12 @@ type JudgeResult struct {
 
 // Judge is an interface for LLM-based grading. See judge.go for implementation.
 type Judge interface {
-	Grade(response, idealResponse, criterion string) (*JudgeResult, error)
+	Grade(ctx context.Context, response, idealResponse, criterion string) (*JudgeResult, error)
 }
 
 // GradeScenario evaluates a scenario's rubric criteria and auto-checks against a chat result.
 // If judge is nil, llm_judge criteria are skipped.
-func GradeScenario(scenario PlanScenario, result ChatResult, judge Judge) *ScenarioGrade {
+func GradeScenario(ctx context.Context, scenario PlanScenario, result ChatResult, judge Judge) *ScenarioGrade {
 	grade := &ScenarioGrade{Scenario: scenario.Name}
 
 	// Auto-check: max_duration_ms
@@ -85,7 +86,7 @@ func GradeScenario(scenario PlanScenario, result ChatResult, judge Judge) *Scena
 
 	// Rubric criteria
 	for _, c := range scenario.Rubric {
-		r := evaluateCriterion(c, result, scenario.IdealResponse, judge)
+		r := evaluateCriterion(ctx, c, result, scenario.IdealResponse, judge)
 		grade.Results = append(grade.Results, r)
 	}
 
@@ -102,7 +103,7 @@ func GradeScenario(scenario PlanScenario, result ChatResult, judge Judge) *Scena
 	return grade
 }
 
-func evaluateCriterion(c Criterion, result ChatResult, idealResponse string, judge Judge) CriterionResult {
+func evaluateCriterion(ctx context.Context, c Criterion, result ChatResult, idealResponse string, judge Judge) CriterionResult {
 	switch c.Type {
 	case "contains":
 		pass := strings.Contains(result.Response, c.Value)
@@ -163,7 +164,7 @@ func evaluateCriterion(c Criterion, result ChatResult, idealResponse string, jud
 				Reason:    "skipped: no judge configured",
 			}
 		}
-		jr, err := judge.Grade(result.Response, idealResponse, c.Criterion)
+		jr, err := judge.Grade(ctx, result.Response, idealResponse, c.Criterion)
 		if err != nil {
 			return CriterionResult{
 				Criterion: "llm_judge:" + c.Criterion,
